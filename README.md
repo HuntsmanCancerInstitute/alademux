@@ -3,7 +3,7 @@
 
 The tool `alademux` is meant to allow you to customize your demultiplexing
 needs in a la carte manner, hence the name. What follows are examples of how to
-demultiplex the 4 types of commonly encountered scenarios in the bioinformatics
+demultiplex the 5 types of commonly encountered scenarios in the bioinformatics
 core.
 
 Log in to hci-zion. The software `alademux` software was built and tested
