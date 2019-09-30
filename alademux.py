@@ -63,6 +63,6 @@ demuxer = DemuxScripter(args.run_id, run_folder_path, out_demux_path,
                         args.type, args.bcl2fastq)
 demuxer.write_demux_script()
 
-print("Start demultiplexing : ")
+print("Start demultiplexing with the following commands: ")
 print("cd " + out_demux_path)
-print("nohup ./demux.sh & ")
+print("nohup ./demuxer.sh & ")
