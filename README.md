@@ -226,3 +226,29 @@ python3 alademux/alademux.py -r 190917_M00736_0336_MS8428226-300V2 \
   -t patchpcr \
   -b --use-bases-mask='y150n,i8n,y9,y150n'
 ```
+
+
+## MiSeq Nano Run
+
+These runs require you to specify a manual SampleSheet.csv provided by the HT-Genomics Sequencing group. Often, the core puts these runs in a different path than the standard Illumina runs, which requires us to specify the path.
+
+If the run contains Nextera adapters (10 bp ), then you must specify the
+`-n` flag.
+
+```bash
+python3 alademux/alademux.py -r 190927_M05774_0084_MS8566788-050V2 \
+  -i /path/to/nano \
+  -t nano -n
+```
+This command will create the output directory, specify the correct adapter,
+and create the correct script. You will see output like this:
+
+```
+Nano: No SampleSheet.csv being written. User must specify SampleSheet.csv
+Trimming Nextera adapters...
+Start demultiplexing with the following commands:
+cd /path/to/demux/190927_M05774_0084_MS8566788-050V2/20190930-220535
+nohup ./demuxer.sh &
+```
+
+You will still need to copy the SampleSheet.csv to the output directory.

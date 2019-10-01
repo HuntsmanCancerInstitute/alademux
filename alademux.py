@@ -28,12 +28,12 @@ p.add_argument('-i', '--run_path', nargs='?',
 p.add_argument('-o', '--out_path', nargs='?',
                     help = 'Path to demultiplexing results',
                     default = params.demux_result_path)
+p.add_argument('-n','--nextera', action = 'store_true',
+               help='''Add flag to indicate nextera adapters for MiSeq Nano Runs.
+               Otherwise, Illumina adapters are assumed to be the case.''')
 p.add_argument('-b','--bcl2fastq', nargs=argparse.REMAINDER,
                help='''Any argument to pass to bcl2fastq. Note, these args
                are not sanitized.''')
-p.add_argument('-n','--nextera', action = 'store_true')
-               help='''Add flag to indicate nextera adapters for MiSeq Nano Runs.
-               Otherwise, Illumina adapters are assumed to be the case.''')
 args = p.parse_args()
 
 # sanitize lanes
@@ -66,7 +66,7 @@ else:
 
 # write script for demultiplexing demux.sh
 demuxer = DemuxScripter(args.run_id, run_folder_path, out_demux_path,
-                        args.type, args.bcl2fastq, args.nextera)
+                        args.type, args.nextera, args.bcl2fastq)
 demuxer.write_demux_script()
 
 print("Start demultiplexing with the following commands: ")

@@ -10,7 +10,7 @@ import pipelineparams as params
 
 class DemuxScripter:
     def __init__(self, run_id, run_folder_path, out_path, demux_type,
-               args_bcl2fastq=None, nextera):
+                 nextera, args_bcl2fastq=None):
         self.run_id = run_id
         self.in_path = run_folder_path
         self.out_path = out_path
@@ -43,6 +43,13 @@ class DemuxScripter:
         self.script += 'OUT_BCL2FASTQ=' + self.out_path + '\n'
         self.script += 'RUN=' + self.run_id + '\n\n'
         self.script += 'cd $OUT_BCL2FASTQ\n\n'
+        if self.type == 'nano':
+            if self.nextera:
+                print("Trimming Nextera adapters...")
+                self.script += 'ADAPTER=CTGTCTCTTATACACATCT\n'
+            else:
+                print("Trimming Illumina adapters...")
+                self.script += 'ADAPTER=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n'
     def count_index_reads(self):
         configfile = os.path.join(self.in_path, 'RunInfo.xml')
         if not os.path.exists(configfile):
@@ -160,12 +167,6 @@ class DemuxScripter:
         f.close()
         return(self.keep_short_reads())
     def nano(self):
-        if self.nextera:
-            print("Trimming Nextera adapters...")
-            self.script += 'ADAPTER=CTGTCTCTTATACACATCT\n'
-        else:
-            print("Trimming Illumina adapters...")
-            self.script += 'ADAPTER=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n'
         return(self.keep_short_reads())
     def get_cmd(self):
         """Construct the demultiplexing command based on the type."""
