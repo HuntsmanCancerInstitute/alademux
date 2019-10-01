@@ -10,16 +10,19 @@ import pipelineparams as params
 
 class DemuxScripter:
     def __init__(self, run_id, run_folder_path, out_path, demux_type,
-               args_bcl2fastq=None):
+               args_bcl2fastq=None, nextera):
         self.run_id = run_id
         self.in_path = run_folder_path
         self.out_path = out_path
         self.out_file = os.path.join(out_path, 'demuxer.sh')
         self.type = demux_type
-        check = demux_type in ['standard', '10x', '10x-atac', 'patchpcr']
+        check = demux_type in ['standard', '10x', '10x-atac', 'patchpcr',
+                               'nano']
         if not check:
             raise NameError('Type of demultiplexing not available.')
         self.args = args_bcl2fastq
+        # boolean True if nextera adapters used for miseq nano
+        self.nextera = nextera
         self.nprocs = str(multiprocessing.cpu_count() - 1)
         transfer_path = os.path.join(params.alademux_path, 'templates')
         self.transfer = {'standard': os.path.join(transfer_path,
@@ -31,7 +34,9 @@ class DemuxScripter:
                          '10x-long': os.path.join(transfer_path,
                                                   '10x_transfer.sh'),
                          'patchpcr': os.path.join(transfer_path,
-                                                  'standard_transfer.sh')
+                                                  'standard_transfer.sh'),
+                         'nano': os.path.join(transfer_path,
+                                                  'nano_report.sh')
                          }
         self.script = '#!/bin/bash\n\nset -e\n'
         self.script += 'IN_BCL2FASTQ=' + self.in_path + '\n'
@@ -134,17 +139,14 @@ class DemuxScripter:
         # swap the 1st nucleotide index with the 10x tag
         self.tag_swapper()
         return(cmd)
+    def keep_short_reads(self):
+        """Add bcl2fastq options to keep short read lengths."""
+        cmd = self.standard()
+        short = ['--minimum-trimmed-read-length 0',
+               '--mask-short-adapter-reads 0']
+        cmd.extend(short)
+        return(cmd)
     def patchpcr(self):
-        cmd = [params.bcl2fastq_path,
-               '--runfolder-dir', '$IN_BCL2FASTQ',
-               '--sample-sheet', os.path.join('$OUT_BCL2FASTQ',
-                                              'SampleSheet.csv'),
-               '--output-dir', '$OUT_BCL2FASTQ',
-               '--minimum-trimmed-read-length 0',
-               '--mask-short-adapter-reads 0',
-
-               '--processing-threads', self.nprocs,
-               ]
         # check for required argument
         self.check_use_bases()
         # remove NNNNs from SampleSheet index2
@@ -156,15 +158,25 @@ class DemuxScripter:
         f = open(fname_samples,'w')
         f.write(newdata)
         f.close()
-        return(cmd)
+        return(self.keep_short_reads())
+    def nano(self):
+        if self.nextera:
+            print("Trimming Nextera adapters...")
+            self.script += 'ADAPTER=CTGTCTCTTATACACATCT\n'
+        else:
+            print("Trimming Illumina adapters...")
+            self.script += 'ADAPTER=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n'
+        return(self.keep_short_reads())
     def get_cmd(self):
         """Construct the demultiplexing command based on the type."""
-        if (self.type == 'standard'):
+        if self.type == 'standard':
             cmd = self.standard()
         elif self.type == '10x' or self.type == '10x-atac':
             cmd = self.tenx()
-        elif (self.type == 'patchpcr'):
+        elif self.type == 'patchpcr':
             cmd = self.patchpcr()
+        elif self.type == 'nano':
+            cmd = self.nano()
         # add the additional arguments to the command.
         if self.args:
             cmd.extend(self.args)
